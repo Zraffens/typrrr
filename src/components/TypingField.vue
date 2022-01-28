@@ -1,25 +1,33 @@
 <template>
-  <div class="parent">
-    <div id="timer"></div>
-    <div id="speed">0 wpm</div>
-    <div id="accuracy">{{ accuracy }}</div>
-    <div id="text">
-      {{ sentence }}
+  <div class="container">
+    <div class="race-details">
+      <div class="flex">
+        <h5 id="init-countdown">The race will start in 10</h5>
+      </div>
+      <div id="speed">Speed: {{ speed }} wpm</div>
+      <div id="accuracy">Accuracy {{ accuracy }}%</div>
     </div>
     <div class="field">
+      <div id="text">
+        {{ text }}
+      </div>
       <input
+        readonly
         onpaste="return false"
         autocomplete="off"
-        @keydown="keyup($event)"
+        @keydown="keydown($event)"
         type="text"
         name=""
         id="textField"
-        placeholder="Type the above text here"
+        placeholder="Type the above text here when the race begins"
       />
     </div>
-    <button class="button" id="replay" @click="replay">
-      Replay your keystrokes
-    </button>
+    <div id="review">
+      <h4>Review your typing.</h4>
+      <button class="button" id="replay" @click="replay">
+        Replay your keystrokes
+      </button>
+    </div>
     <div id="replayed-text"></div>
   </div>
 </template>
@@ -43,13 +51,13 @@ import { keyTiming } from "../types";
         "ArrowDown",
         "ArrowUp",
       ],
-      // sentence: 'People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.',
-      sentence: "fuck you",
+      text: "Hello there old man",
+      // text: "People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.",
       counter: 0,
       wrongCounter: 0,
       wrongPressed: 0,
       wrong: false,
-      timeleft: 60,
+      timeleft: 59,
       wordsTyped: 0,
       finished: false,
       times: [],
@@ -57,30 +65,55 @@ import { keyTiming } from "../types";
   },
   computed: {
     words: function (): string[] {
-      return this.sentence.split(" ");
+      return this.text.split(" ");
+    },
+    speed: function (): number {
+      if (this.finished) {
+        return this.speed;
+      }
+      return Math.round((this.wordsTyped / (60 - this.timeleft)) * 60);
     },
     accuracy: function (): number {
-      return (1 - this.wrongPressed / this.sentence.length) * 100;
+      return Math.round((1 - this.wrongPressed / this.text.length) * 100);
+    },
+    textField: function (): HTMLInputElement {
+      return <HTMLInputElement>document.querySelector("#textField");
     },
   },
   methods: {
-    keyup(e: KeyboardEvent) {
-      console.log(this.sentence.length);
-
-      console.log(this.times);
-      const textField = <HTMLInputElement>document.querySelector("#textField");
-      if (this.ignoredKeys.includes(e.key)) {
+    initialCountdown() {
+      const self = this;
+      var timeleft = 10;
+      var initCountdown = <HTMLDivElement>(
+        document.getElementById("init-countdown")
+      );
+      var downloadTimer = setInterval(function () {
+        if (timeleft <= 0) {
+          clearInterval(downloadTimer);
+          initCountdown.innerHTML = "THE RACE BEGINS!";
+        } else {
+          initCountdown.innerHTML = "The race will start in " + timeleft;
+        }
+        timeleft -= 1;
+        if (timeleft < 0) {
+          self.countdown(59);
+          return;
+        }
+      }, 1000);
+    },
+    keydown(e: KeyboardEvent) {
+      if (this.ignoredKeys.includes(e.key) || this.textField.readOnly) {
+        // terminates the function for unnecessary keys
         return;
       }
-      this.times.push({ timestamp: e.timeStamp, key: e.key });
+      this.times.push({ timestamp: e.timeStamp, key: e.key }); // records the keystrokes
       if (e.key === "Backspace") {
+        if (this.counter === 0) {
+          return;
+        }
         if (this.wrong) {
-          console.log(this.wrongCounter);
           this.wrongCounter--;
-          console.log(this.wrongCounter);
-          if (this.wrongCounter == 0) {
-            this.wrong = false;
-          }
+          this.wrong = this.wrongCounter === 0 ? false : true;
           this.wrongText();
         } else {
           this.counter--;
@@ -88,54 +121,54 @@ import { keyTiming } from "../types";
         }
         return;
       }
-      if (this.counter === 0) {
-        this.countdown(60);
-      }
-      if (e.key === this.sentence[this.counter] && !this.wrong) {
+      if (e.key === this.text[this.counter] && !this.wrong) {
         if (e.key == " ") {
           this.wordsTyped++;
-          textField.value = "";
-          console.log("words", this.wordsTyped);
+          this.textField.value = "";
         }
         this.counter++;
         this.written();
-        if (this.counter === this.sentence.length) {
+        if (this.counter === this.text.length) {
           this.finishedFunc();
-          return;
         }
-        console.log(e.key);
-        console.log(this.counter);
       } else {
-        console.log(e.key);
-        console.log("wrong");
         this.wrong = true;
         this.wrongCounter++;
         this.wrongPressed++;
-        console.log(this.wrongCounter);
         this.wrongText();
       }
     },
+    // Marks the wrongly typed text as red
     wrongText() {
       const text = <HTMLDivElement>document.querySelector("#text");
-      text.innerHTML = `<span class="written">${this.sentence.slice(
+      text.innerHTML = `<span class="written">${this.text.slice(
         0,
         this.counter
-      )}</span><span class="wrong">${this.sentence.slice(
+      )}</span><span class="wrong">${this.text.slice(
         this.counter,
         this.counter + this.wrongCounter
-      )}</span>${this.sentence.slice(this.counter + this.wrongCounter, -1)}`;
+      )}</span>${this.text.slice(
+        this.counter + this.wrongCounter,
+        this.text.length + 1
+      )}`;
     },
+    // Marks the correctly typed text as green
     written() {
       const text = <HTMLDivElement>document.querySelector("#text");
-      text.innerHTML = `<span class="written">${this.sentence.slice(
+      text.innerHTML = `<span class="written">${this.text.slice(
         0,
         this.counter
-      )}</span>${this.sentence.slice(this.counter, -1)}`;
+      )}</span>${this.text.slice(this.counter, this.text.length + 1)}`;
     },
+    // A basic countdown function
     countdown(total: number) {
+      this.textField.removeAttribute("readonly");
+      this.textField.setAttribute("placeholder", "");
       console.log("executed");
-      let progress: any = <HTMLDivElement>document.getElementById("timer");
-      let speed: any = <HTMLDivElement>document.getElementById("speed");
+      let progress = <HTMLHeadingElement>(
+        document.getElementById("init-countdown")
+      );
+      let speed = <HTMLDivElement>document.getElementById("speed");
       const self = this;
       this.timeleft = total;
       var downloadTimer = setInterval(function () {
@@ -146,14 +179,28 @@ import { keyTiming } from "../types";
           progress.innerHTML = "Timer: " + self.timeleft;
           if (!self.finished) {
             speed.innerHTML =
-              (Number(self.wordsTyped) / (60 - Number(self.timeleft))) * 60;
+              "Speed: " +
+              Math.round(
+                Number(self.wordsTyped) / (60 - Number(self.timeleft))
+              ) *
+                60 +
+              " wpm";
           }
         }
         self.timeleft--;
+        if (self.timeleft < 1) {
+          self.finished = true;
+          self.textField.setAttribute("readonly", true);
+        }
       }, 1000);
     },
     finishedFunc() {
       this.finished = true;
+      this.textField.setAttribute("readonly", true);
+      const mainField = <HTMLDivElement>document.querySelector(".field");
+      const review = <HTMLDivElement>document.querySelector("#review")
+      mainField.setAttribute("style", "display: none;");
+      review.setAttribute("style", "display: block;");
       console.log("FINISHED");
     },
     replay() {
@@ -166,23 +213,31 @@ import { keyTiming } from "../types";
       const filteredKeys = this.times.filter((keyTime: keyTiming): Boolean => {
         return !this.ignoredKeys.includes(keyTime.key);
       });
-      // console.log('filtered before', filteredKeys)
-      // const filteredMappedKeys = filteredKeys.map((keyItem: keyTiming): keyTiming => {
-      //   let newItem = keyItem
-      //   newItem.timestamp = keyItem.timestamp - filteredKeys[0].timestamp
-      //   console.log('0', filteredKeys[0].timestamp)
-      //   return newItem
-      // })
-      console.log("filtered after", filteredKeys);
-      // console.log('mapped', filteredMappedKeys)
-      console.log("replaying");
-      filteredKeys.forEach((keyTime: keyTiming) => {
+      const firstKey = filteredKeys[0].timestamp;
+      const properlyTimedKeys = filteredKeys.map(
+        (keyItem: keyTiming): keyTiming => {
+          let newItem = keyItem;
+          newItem.timestamp = keyItem.timestamp - firstKey;
+          return newItem;
+        }
+      );
+      properlyTimedKeys.forEach((keyTime: keyTiming) => {
         setTimeout(function () {
           console.log(keyTime.key);
-          replayedText.innerHTML += keyTime.key;
+          if (keyTime.key === "Backspace") {
+            replayedText.innerHTML = replayedText.innerHTML.slice(
+              0,
+              replayedText.innerHTML.length - 1
+            );
+          } else {
+            replayedText.innerHTML += keyTime.key;
+          }
         }, keyTime.timestamp);
       });
     },
+  },
+  mounted() {
+    this.initialCountdown();
   },
 })
 export default class TypingField extends Vue {}
@@ -205,6 +260,46 @@ a {
   color: #42b983;
 }
 
+#init-countdown {
+  background: rgb(32, 32, 32);
+  margin: 0.3em 0 0.3em 0;
+  width: 30vw;
+  border-radius: 5px;
+  padding: 0.4em;
+  border: #333;
+  color: white;
+}
+
+.race-details {
+  margin-top: 1em;
+}
+
+#speed,
+#accuracy {
+  background: #212b86;
+  font-size: 1.5em;
+  width: 10em;
+}
+
+#text {
+  font-size: 1.3em;
+  font-family: courier;
+}
+
+.field {
+  background: #333333;
+  margin: 1em 0 1em 0;
+  padding: 0.5em;
+  border-radius: 5px;
+}
+
+input[type="text"] {
+  width: 100%;
+  background: #222;
+  font-size: 1.3em;
+  color: white;
+}
+
 #text:hover {
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -214,7 +309,10 @@ a {
   user-select: none;
 }
 
-.written {
-  color: #42b983;
+#review {
+  background: #323437;
+  border-radius: 10px;
+  display: none;
 }
+
 </style>
