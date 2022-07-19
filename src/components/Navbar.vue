@@ -6,15 +6,16 @@
         <li class="enlarge"><a href="">About</a></li>
       </ul>
       <div class="align-center">
-        <h1 id="brand" class="enlarge"><a href="">Typeracer</a></h1>
+        <h1 id="brand" class="enlarge"><router-link :to="{name: 'Home'}">Typrrr.com</router-link></h1>
       </div>
       <div class="user-info enlarge">
         <div class="flex">
           <div class="profile-logo"></div>
           <div class="stats">
-            <p class="username">Guest</p>
-            <p class="races">Races: 0</p>
-            <div class="avg-speed">Average Speed: 0wpm</div>
+            <p class="username">{{ loggedIn ? username : `Guest` }}</p>
+            <p class="races">Races: {{ races }}</p>
+            <div class="avg-speed">Average Speed: {{avgSpeed}}wpm</div>
+            {{id}}
           </div>
         </div>
       </div>
@@ -25,11 +26,28 @@
 <script lang="ts">
 import { VueElement } from "@vue/runtime-dom";
 import { Options, Vue } from "vue-class-component";
+import { mapState } from 'vuex'
+import axiosInstance from "../axios"
 
 @Options({
   data() {
-    return {};
+    return {
+      loggedIn: localStorage.getItem("loggedIn") == 'true' ? true : false,
+    };
   },
+  computed: {
+     id() {
+      return this.$store.getters.getId
+    },
+     races() {
+      return this.$store.getters.getRaces
+    },
+     avgSpeed() {
+      return this.$store.getters.getAvgSpeed
+    },
+  },
+  mounted() {
+  }
 })
 export default class Navbar extends Vue {}
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <div class="race-details">
-      <div class="flex">
+    <div class="race-details flex">
+      <div class="">
         <h5 id="init-countdown">The race will start in 10</h5>
       </div>
       <div id="speed">Speed: {{ speed }} wpm</div>
@@ -22,6 +22,14 @@
         placeholder="Type the above text here when the race begins"
       />
     </div>
+    <div class="align-center">
+      <router-link
+        @click="$forceUpdate()"
+        :to="{ name: 'Race' }"
+        class="button race-again enlarge"
+        >Race again!</router-link
+      >
+    </div>
     <div id="review">
       <h4>Review your typing.</h4>
       <button class="button" id="replay" @click="replay">
@@ -35,7 +43,8 @@
 <script lang="ts">
 import { VueElement } from "@vue/runtime-dom";
 import { Options, Vue } from "vue-class-component";
-import { keyTiming } from "../types";
+import { keyTiming, User } from "../types";
+import axiosInstance from "axios";
 
 @Options({
   data() {
@@ -51,7 +60,7 @@ import { keyTiming } from "../types";
         "ArrowDown",
         "ArrowUp",
       ],
-      text: "Hello there old man",
+      text: "Hello there my friend.",
       // text: "People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.",
       counter: 0,
       wrongCounter: 0,
@@ -61,17 +70,16 @@ import { keyTiming } from "../types";
       wordsTyped: 0,
       finished: false,
       times: [],
+      loggedIn: localStorage.getItem("loggedIn") == 'true' ? true : false,
+      id: localStorage.getItem("id"),
+      username: localStorage.getItem('username'),
+      races: localStorage.getItem('races_completed'),
+      avgSpeed: localStorage.getItem('average_speed')
     };
   },
   computed: {
     words: function (): string[] {
       return this.text.split(" ");
-    },
-    speed: function (): number {
-      if (this.finished) {
-        return this.speed;
-      }
-      return Math.round((this.wordsTyped / (60 - this.timeleft)) * 60);
     },
     accuracy: function (): number {
       return Math.round((1 - this.wrongPressed / this.text.length) * 100);
@@ -79,11 +87,22 @@ import { keyTiming } from "../types";
     textField: function (): HTMLInputElement {
       return <HTMLInputElement>document.querySelector("#textField");
     },
+    totalCounter: function (): number {
+      return this.text.split(" ").length * 3;
+    },
+    speed: function (): number {
+      if (this.finished) {
+        return this.speed;
+      }
+      return Math.round(
+        (this.wordsTyped / (this.totalCounter - this.timeleft)) * 60
+      );
+    },
   },
   methods: {
     initialCountdown() {
       const self = this;
-      var timeleft = 10;
+      var timeleft = 5;
       var initCountdown = <HTMLDivElement>(
         document.getElementById("init-countdown")
       );
@@ -96,7 +115,7 @@ import { keyTiming } from "../types";
         }
         timeleft -= 1;
         if (timeleft < 0) {
-          self.countdown(59);
+          self.countdown(self.totalCounter);
           return;
         }
       }, 1000);
@@ -129,6 +148,7 @@ import { keyTiming } from "../types";
         this.counter++;
         this.written();
         if (this.counter === this.text.length) {
+          this.wordsTyped++;
           this.finishedFunc();
         }
       } else {
@@ -194,13 +214,50 @@ import { keyTiming } from "../types";
         }
       }, 1000);
     },
-    finishedFunc() {
+    async finishedFunc() {
       this.finished = true;
       this.textField.setAttribute("readonly", true);
       const mainField = <HTMLDivElement>document.querySelector(".field");
-      const review = <HTMLDivElement>document.querySelector("#review")
+      const review = <HTMLDivElement>document.querySelector("#review");
+      const raceAgain = <HTMLDivElement>document.querySelector(".race-again");
       mainField.setAttribute("style", "display: none;");
       review.setAttribute("style", "display: block;");
+      raceAgain.setAttribute("style", "display: block;");
+      if (this.loggedIn) {
+        const new_avg =
+          (+this.avgSpeed * +this.races + this.speed) /
+          (+this.races + 1);
+
+        await axiosInstance
+          .patch(
+            `http://localhost:8000/users/${this.id}/`,
+            {
+              races_completed: +this.races + 1,
+              average_speed: new_avg,
+            },
+            { headers: { "Content-type": "application/json; charset=UTF-8" } }
+          )
+          .then((data) => console.log(data));
+        localStorage.setItem("average_speed", `${new_avg}`);
+        this.avgSpeed = new_avg
+        localStorage.setItem(
+          "races_completed",
+          `${+this.races + 1}`
+        );
+        this.races = +this.races + 1;
+      } else {
+        const new_avg =
+          (+this.avgSpeed * +this.races + this.speed) /
+          (+this.races + 1);
+        this.avgSpeed = new_avg
+        localStorage.setItem("average_speed", `${new_avg}`);
+        localStorage.setItem(
+          "races_completed",
+          `${+this.races + 1}`
+        );
+        this.races = +this.races + 1;
+        console.log(this.races)
+      }
       console.log("FINISHED");
     },
     replay() {
@@ -279,6 +336,7 @@ a {
   background: #212b86;
   font-size: 1.5em;
   width: 10em;
+  padding: 0.4em;
 }
 
 #text {
@@ -309,10 +367,18 @@ input[type="text"] {
   user-select: none;
 }
 
-#review {
-  background: #323437;
-  border-radius: 10px;
+.race-again.button {
+  margin: 1em;
+  font-size: 2em;
+  padding: 0.5em 1.5em;
   display: none;
+  height: auto;
 }
 
+#review {
+  background: #323437;
+  display: none;
+  padding: 1em;
+  border-radius: 10px;
+}
 </style>
