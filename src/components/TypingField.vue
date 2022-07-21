@@ -60,8 +60,8 @@ import axiosInstance from "axios";
         "ArrowDown",
         "ArrowUp",
       ],
-      text: "Hello there my friend.",
-      // text: "People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.",
+      // text: "Hello there my friend.",
+      text: "People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.",
       counter: 0,
       wrongCounter: 0,
       wrongPressed: 0,
@@ -70,11 +70,11 @@ import axiosInstance from "axios";
       wordsTyped: 0,
       finished: false,
       times: [],
-      loggedIn: localStorage.getItem("loggedIn") == 'true' ? true : false,
+      loggedIn: localStorage.getItem("loggedIn") == "true" ? true : false,
       id: localStorage.getItem("id"),
-      username: localStorage.getItem('username'),
-      races: localStorage.getItem('races_completed'),
-      avgSpeed: localStorage.getItem('average_speed')
+      username: localStorage.getItem("username"),
+      races: localStorage.getItem("races_completed"),
+      avgSpeed: localStorage.getItem("average_speed"),
     };
   },
   computed: {
@@ -225,8 +225,7 @@ import axiosInstance from "axios";
       raceAgain.setAttribute("style", "display: block;");
       if (this.loggedIn) {
         const new_avg =
-          (+this.avgSpeed * +this.races + this.speed) /
-          (+this.races + 1);
+          (+this.avgSpeed * +this.races + this.speed) / (+this.races + 1);
 
         await axiosInstance
           .patch(
@@ -239,24 +238,17 @@ import axiosInstance from "axios";
           )
           .then((data) => console.log(data));
         localStorage.setItem("average_speed", `${new_avg}`);
-        this.avgSpeed = new_avg
-        localStorage.setItem(
-          "races_completed",
-          `${+this.races + 1}`
-        );
+        this.avgSpeed = new_avg;
+        localStorage.setItem("races_completed", `${+this.races + 1}`);
         this.races = +this.races + 1;
       } else {
         const new_avg =
-          (+this.avgSpeed * +this.races + this.speed) /
-          (+this.races + 1);
-        this.avgSpeed = new_avg
+          (+this.avgSpeed * +this.races + this.speed) / (+this.races + 1);
+        this.avgSpeed = new_avg;
         localStorage.setItem("average_speed", `${new_avg}`);
-        localStorage.setItem(
-          "races_completed",
-          `${+this.races + 1}`
-        );
+        localStorage.setItem("races_completed", `${+this.races + 1}`);
         this.races = +this.races + 1;
-        console.log(this.races)
+        console.log(this.races);
       }
       console.log("FINISHED");
     },

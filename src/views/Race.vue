@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <TypingField />
+    <Suspense>
+      <template #default> <TypingField /></template>
+      <template #fallback>Loading...</template>
+    </Suspense>
   </div>
 </template>
 
@@ -16,6 +19,4 @@ import TypingField from "@/components/TypingField.vue"; // @ is an alias to /src
 export default class Race extends Vue {}
 </script>
 
-<style scoped>
-</style>
-
+<style scoped></style>
