@@ -4,15 +4,16 @@
       <div class="">
         <h5 id="init-countdown">The race will start in 10</h5>
       </div>
-      <div id="speed">Speed: {{ speed }} wpm</div>
-      <div id="accuracy">Accuracy {{ accuracy }}%</div>
+      <div class="flex bubbles">
+        <div class="bubble" id="speed">{{ speed }} wpm</div>
+        <div class="bubble" id="accuracy">{{ accuracy }}%</div>
+      </div>
     </div>
     <div class="field">
       <div id="text">
         {{ text }}
       </div>
       <input
-        readonly
         onpaste="return false"
         autocomplete="off"
         @keydown="keydown($event)"
@@ -22,33 +23,44 @@
         placeholder="Type the above text here when the race begins"
       />
     </div>
-    <div class="align-center">
-      <router-link
-        @click="$forceUpdate()"
-        :to="{ name: 'Race' }"
-        class="button race-again enlarge"
-        >Race again!</router-link
-      >
+    <div v-if="finished" class="align-center">
+      <button @click="tryAgain" class="button race-again enlarge">
+        Race again!
+      </button>
     </div>
-    <div id="review">
+    <div id="review" v-if="finished">
       <h4>Review your typing.</h4>
       <button class="button" id="replay" @click="replay">
         Replay your keystrokes
       </button>
     </div>
-    <div id="replayed-text"></div>
+    <div v-if="finished" id="replayed-text"></div>
+    <div v-if="finished">
+      You had your mistakes in the following keys.
+      <DataChart :chartData="wrongKeys" />
+      <DataLine :times="secsData" :words="filteredInstantSpeed" />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { VueElement } from "@vue/runtime-dom";
 import { Options, Vue } from "vue-class-component";
-import { keyTiming, User } from "../types";
+import { keyTiming, keys } from "../types";
+import { mapActions } from "vuex";
+import { mapState } from "vuex";
 import axiosInstance from "axios";
+import DataChart from "./DataChart.vue";
+import DataLine from "./DataLine.vue";
 
 @Options({
+  components: {
+    DataChart,
+    DataLine,
+  },
   data() {
     return {
+      quotes: [],
       ignoredKeys: [
         "Shift",
         "Tab",
@@ -60,7 +72,7 @@ import axiosInstance from "axios";
         "ArrowDown",
         "ArrowUp",
       ],
-      text: "Hello there my friend.",
+      text: "",
       // text: "People have the right to think and say whatever they want to. But you have the right not to take it to heart, and not to react.",
       counter: 0,
       wrongCounter: 0,
@@ -70,11 +82,16 @@ import axiosInstance from "axios";
       wordsTyped: 0,
       finished: false,
       times: [],
-      loggedIn: localStorage.getItem("loggedIn") == 'true' ? true : false,
+      loggedIn: localStorage.getItem("loggedIn") == "true" ? true : false,
       id: localStorage.getItem("id"),
-      username: localStorage.getItem('username'),
-      races: localStorage.getItem('races_completed'),
-      avgSpeed: localStorage.getItem('average_speed')
+      username: localStorage.getItem("username"),
+      races: localStorage.getItem("races_completed"),
+      avgSpeed: localStorage.getItem("average_speed"),
+      wrongKeys: {},
+      wordsPerFive: [],
+      countPerFive: 0,
+      secsData: [],
+      filteredInstantSpeed: [],
     };
   },
   computed: {
@@ -88,7 +105,7 @@ import axiosInstance from "axios";
       return <HTMLInputElement>document.querySelector("#textField");
     },
     totalCounter: function (): number {
-      return this.text.split(" ").length * 3;
+      return this.text.split(" ").length * 3 - 1;
     },
     speed: function (): number {
       if (this.finished) {
@@ -98,29 +115,36 @@ import axiosInstance from "axios";
         (this.wordsTyped / (this.totalCounter - this.timeleft)) * 60
       );
     },
+    ...mapState(["userInfo"]),
   },
+  created() {},
   methods: {
-    initialCountdown() {
-      const self = this;
-      var timeleft = 5;
-      var initCountdown = <HTMLDivElement>(
-        document.getElementById("init-countdown")
-      );
-      var downloadTimer = setInterval(function () {
-        if (timeleft <= 0) {
-          clearInterval(downloadTimer);
-          initCountdown.innerHTML = "THE RACE BEGINS!";
-        } else {
-          initCountdown.innerHTML = "The race will start in " + timeleft;
-        }
-        timeleft -= 1;
-        if (timeleft < 0) {
-          self.countdown(self.totalCounter);
-          return;
-        }
-      }, 1000);
-    },
+    ...mapActions(["completeRace"]),
+    // initialCountdown() {
+    //   const self = this;
+    //   var timeleft = 5;
+    //   var initCountdown = <HTMLDivElement>(
+    //     document.getElementById("init-countdown")
+    //   );
+    //   var downloadTimer = setInterval(function () {
+    //     if (timeleft <= 0) {
+    //       clearInterval(downloadTimer);
+    //       initCountdown.innerHTML = "THE RACE BEGINS!";
+    //     } else {
+    //       initCountdown.innerHTML = "The race will start in " + timeleft;
+    //     }
+    //     timeleft -= 1;
+    //     if (timeleft < 0 && !self.finished) {
+    //       self.countdown(self.totalCounter);
+    //       return;
+    //     }
+    //   }, 1000);
+    // },
     keydown(e: KeyboardEvent) {
+      if (this.counter == 0 && this.wrongCounter == 0) {
+        this.countdown(this.totalCounter);
+      }
+      const rightKey = this.text[this.counter];
       if (this.ignoredKeys.includes(e.key) || this.textField.readOnly) {
         // terminates the function for unnecessary keys
         return;
@@ -132,16 +156,17 @@ import axiosInstance from "axios";
         }
         if (this.wrong) {
           this.wrongCounter--;
+          this.wrongText(e);
           this.wrong = this.wrongCounter === 0 ? false : true;
-          this.wrongText();
         } else {
           this.counter--;
           this.written();
         }
         return;
       }
-      if (e.key === this.text[this.counter] && !this.wrong) {
+      if (e.key === rightKey && !this.wrong) {
         if (e.key == " ") {
+          this.wordsPerFive[this.countPerFive]++;
           this.wordsTyped++;
           this.textField.value = "";
         }
@@ -154,12 +179,17 @@ import axiosInstance from "axios";
       } else {
         this.wrong = true;
         this.wrongCounter++;
-        this.wrongPressed++;
         this.wrongText();
+        if (this.wrongCounter === 1) {
+          this.wrongKeys[rightKey] = this.wrongKeys[rightKey]
+            ? this.wrongKeys[rightKey] + 1
+            : 1;
+          this.wrongPressed++;
+        }
       }
     },
     // Marks the wrongly typed text as red
-    wrongText() {
+    wrongText(key: KeyboardEvent) {
       const text = <HTMLDivElement>document.querySelector("#text");
       text.innerHTML = `<span class="written">${this.text.slice(
         0,
@@ -182,7 +212,6 @@ import axiosInstance from "axios";
     },
     // A basic countdown function
     countdown(total: number) {
-      this.textField.removeAttribute("readonly");
       this.textField.setAttribute("placeholder", "");
       console.log("executed");
       let progress = <HTMLHeadingElement>(
@@ -192,22 +221,16 @@ import axiosInstance from "axios";
       const self = this;
       this.timeleft = total;
       var downloadTimer = setInterval(function () {
-        if (self.timeleft <= 0) {
+        self.timeleft--;
+        if (self.timeleft <= 0 || self.finished) {
           clearInterval(downloadTimer);
           progress.innerHTML = "Finished";
         } else {
           progress.innerHTML = "Timer: " + self.timeleft;
-          if (!self.finished) {
-            speed.innerHTML =
-              "Speed: " +
-              Math.round(
-                Number(self.wordsTyped) / (60 - Number(self.timeleft))
-              ) *
-                60 +
-              " wpm";
-          }
         }
-        self.timeleft--;
+        if ((self.totalCounter - self.timeleft) % 5 === 0) {
+          self.countPerFive++;
+        }
         if (self.timeleft < 1) {
           self.finished = true;
           self.textField.setAttribute("readonly", true);
@@ -216,17 +239,69 @@ import axiosInstance from "axios";
     },
     async finishedFunc() {
       this.finished = true;
+      let progress = <HTMLHeadingElement>(
+        document.getElementById("init-countdown")
+      );
+      progress.innerHTML = "Finished";
+      this.wordsPerFive[this.countPerFive + 1] = "finished";
+      console.log(this.wordsPerFive);
+      let counter = 0;
+      for (const i in this.wordsPerFive) {
+        console.log(i, this.wordsPerFive[i]);
+        if (this.wordsPerFive[i] != "finished") {
+          this.filteredInstantSpeed.push(parseInt(this.wordsPerFive[i]));
+          counter++;
+        } else {
+          break;
+        }
+      }
+      for (let i = 0; i < counter; i++) {
+        this.secsData[i] = i;
+      }
+      console.log("secsdata", this.secsData, this.filteredInstantSpeed);
       this.textField.setAttribute("readonly", true);
-      const mainField = <HTMLDivElement>document.querySelector(".field");
-      const review = <HTMLDivElement>document.querySelector("#review");
-      const raceAgain = <HTMLDivElement>document.querySelector(".race-again");
-      mainField.setAttribute("style", "display: none;");
-      review.setAttribute("style", "display: block;");
-      raceAgain.setAttribute("style", "display: block;");
       if (this.loggedIn) {
         const new_avg =
-          (+this.avgSpeed * +this.races + this.speed) /
-          (+this.races + 1);
+          (+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1);
+        localStorage.setItem("average_speed", `${new_avg}`);
+        this.avgSpeed = new_avg;
+        localStorage.setItem("races_completed", `${+this.races + 1}`);
+        this.races = +this.races + 1;
+        const prevData = localStorage.getItem("key_data");
+        const previousData = JSON.parse(prevData || "{}");
+        const newData: keys = {};
+        for (
+          let i = 0;
+          i <
+          Object.keys(this.wrongKeys).length + Object.keys(previousData).length;
+          i++
+        ) {
+          const key1 =
+            i < Object.keys(this.wrongKeys).length
+              ? Object.keys(this.wrongKeys)[i]
+              : "";
+          const key2 =
+            i < Object.keys(previousData).length
+              ? Object.keys(previousData)[i]
+              : "";
+          if (key1 && !Object.keys(previousData).includes(key1)) {
+            newData[key1] = this.wrongKeys[key1];
+          } else if (key1 && Object.keys(previousData).includes(key1)) {
+            newData[key1] =
+              parseInt(this.wrongKeys[key1]) + parseInt(previousData[key1]);
+          }
+          if (key2 && !Object.keys(this.wrongKeys).includes(key2)) {
+            newData[key2] = previousData[key2];
+          }
+        }
+        console.log(newData);
+        const newdt = JSON.stringify(newData);
+        console.log("stringified", newdt, "un", newData);
+        console.log(previousData, this.wrongKeys, newData);
+        localStorage.setItem("key_data", newdt);
+        console.log(localStorage.getItem("key_data"));
+        this.completeRace("log", +this.speed);
+        console.log(this.userInfo);
 
         await axiosInstance
           .patch(
@@ -234,29 +309,33 @@ import axiosInstance from "axios";
             {
               races_completed: +this.races + 1,
               average_speed: new_avg,
+              key_data: newdt,
             },
             { headers: { "Content-type": "application/json; charset=UTF-8" } }
           )
           .then((data) => console.log(data));
-        localStorage.setItem("average_speed", `${new_avg}`);
-        this.avgSpeed = new_avg
-        localStorage.setItem(
-          "races_completed",
-          `${+this.races + 1}`
-        );
-        this.races = +this.races + 1;
       } else {
         const new_avg =
-          (+this.avgSpeed * +this.races + this.speed) /
-          (+this.races + 1);
-        this.avgSpeed = new_avg
+          (+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1);
+        this.avgSpeed = new_avg;
         localStorage.setItem("average_speed", `${new_avg}`);
-        localStorage.setItem(
-          "races_completed",
-          `${+this.races + 1}`
-        );
+        localStorage.setItem("races_completed", `${+this.races + 1}`);
+        const prevData = localStorage.getItem("key_data");
+        const previousData = JSON.parse(prevData || "");
+        const newData: keys = {};
+        for (const key in previousData) {
+          if (Object.keys(this.wrongKeys).includes(key)) {
+            newData[key] = previousData[key] + this.wrongKeys[key];
+          } else {
+            newData[key] = previousData[key];
+          }
+        }
+        const newdt = JSON.stringify(newData);
+        localStorage.setItem("key_data", newdt);
         this.races = +this.races + 1;
-        console.log(this.races)
+        this.completeRace(+this.speed);
+        console.log(this.userInfo);
+        console.log(this.races);
       }
       console.log("FINISHED");
     },
@@ -292,9 +371,70 @@ import axiosInstance from "axios";
         }, keyTime.timestamp);
       });
     },
+    tryAgain() {
+      this.finished = false;
+      this.textField.removeAttribute("readonly");
+      this.textField.value = "";
+      // this.initialCountdown();
+      this.counter = 0;
+      this.wrongCounter = 0;
+      this.wrongPressed = 0;
+      this.wrongKeys = {};
+      this.times = [];
+      this.timeleft = 59;
+      this.wordsTyped = 0;
+      this.text = "";
+      this.generateQuote();
+      this.written();
+    },
+    async generateQuote() {
+      const tags = [
+        "calling",
+        "money",
+        "passion",
+        "joblessness",
+        "kingdom",
+        "opportunities",
+        "principles",
+        "serving-god",
+        "love",
+        "purpose",
+        "jobless",
+        "people",
+        "values",
+        "worship",
+        "life",
+        "employment",
+        "work",
+        "service",
+        "time",
+        "god",
+        "destiny",
+      ];
+      const tag = tags[Math.floor(Math.random() * tags.length)];
+      await axiosInstance({
+        method: "GET",
+        url: `https://api.paperquotes.com/apiv1/quotes/?minlength=50&tags=${tag}&order=-likes`,
+        headers: {
+          Authorization: "Token cc2218fa4c809aea84c71c84efd2b57e9f2911bc",
+        },
+      }).then((res) => {
+        this.quotes = res.data;
+        console.log("quote", res.data);
+        this.text =
+          res.data.results[
+            Math.floor(Math.random() * res.data.results.length)
+          ].quote;
+      });
+      for (let i = 0; i < this.totalCounter / 5; i++) {
+        this.wordsPerFive.push(0);
+        console.log("created", this.wordsPerFive, this.totalCounter);
+      }
+    },
   },
-  mounted() {
-    this.initialCountdown();
+  async mounted() {
+    // this.initialCountdown();
+    await this.generateQuote();
   },
 })
 export default class TypingField extends Vue {}
@@ -335,16 +475,32 @@ a {
 #accuracy {
   background: #212b86;
   font-size: 1.5em;
-  width: 10em;
+  width: 5em;
   padding: 0.4em;
 }
 
-#text {
+#accuracy {
+  color: #42b983;
+}
+
+.bubbles {
+  left: 5;
+}
+
+.bubble {
+  border-radius: 40px;
+  width: 80%;
+  font-size: 0.9em;
+}
+
+#text,
+#replayed-text {
   font-size: 1.3em;
   font-family: courier;
 }
 
-.field {
+.field,
+#replayed-text {
   background: #333333;
   margin: 1em 0 1em 0;
   padding: 0.5em;
@@ -371,13 +527,11 @@ input[type="text"] {
   margin: 1em;
   font-size: 2em;
   padding: 0.5em 1.5em;
-  display: none;
   height: auto;
 }
 
 #review {
   background: #323437;
-  display: none;
   padding: 1em;
   border-radius: 10px;
 }

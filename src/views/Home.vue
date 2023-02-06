@@ -10,6 +10,8 @@
       <h3 class="stat">Average Speed: {{ avgSpeed }}wpm</h3>
       <h3 class="stat">Best Race: 0wpm</h3>
       <h3 class="stat">Races Completed: {{ races }}</h3>
+      <DataChart :chartData="JSON.parse(keyData)" />
+      {{keyData}}
     </div>
   </div>
 </template>
@@ -18,18 +20,20 @@
 import { Options, Vue } from "vue-class-component";
 import axiosInstance from "../axios";
 import TypingField from "@/components/TypingField.vue"; // @ is an alias to /src
+import DataChart from "../components/DataChart.vue"
 
 @Options({
   components: {
     TypingField,
+    DataChart
   },
   data() {
     return {
-
       id: localStorage.getItem("id"),
       username: localStorage.getItem('username'),
       races: localStorage.getItem('races_completed'),
-      avgSpeed: localStorage.getItem('average_speed')
+      avgSpeed: localStorage.getItem('average_speed'),
+      keyData: localStorage.getItem('key_data')
     }
     }
   },

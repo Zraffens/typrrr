@@ -1,4 +1,4 @@
-import { HeadersDefaults } from 'axios'
+import { HeadersDefaults } from "axios";
 
 type keyTiming = {
   timestamp: number;
@@ -9,13 +9,17 @@ type User = {
   username?: string;
   email?: string;
   created?: string;
-  races_completed?: number;
-  average_speed?: number;
-  races_won?: number;
+  races_completed?: number | string;
+  average_speed?: number | string;
+  races_won?: number | string;
 };
 
 interface HeaderProperties extends HeadersDefaults {
-  Authorization: string
+  Authorization: string;
 }
 
-export { keyTiming, User, HeaderProperties };
+type keys = {
+  [key: string]: number;
+};
+
+export { keyTiming, keys, User, HeaderProperties };

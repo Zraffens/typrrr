@@ -2,7 +2,7 @@ import { createStore } from 'vuex'
 
 export default createStore({
   state: {
-    userDetails: {
+    userInfo: {
       id: 0,
       username: "",
       email: "",
@@ -14,34 +14,42 @@ export default createStore({
   },
   mutations: {
     created(state, {details}) {
-      state.userDetails = details;
+      state.userInfo = details;
     }
     ,
-    completeRace(state, {speed}) {
-      state.userDetails.races_completed++;
-      state.userDetails.average_speed = (state.userDetails.average_speed * state.userDetails.races_completed + speed) / (state.userDetails.races_completed + 1)
+    completeRace(state, {typingSpeed}) {
+      state.userInfo.races_completed++;
+      console.log('store', typingSpeed)
+      state.userInfo.average_speed = (state.userInfo.average_speed * state.userInfo.races_completed + typingSpeed) / (state.userInfo.races_completed + 1)
     }
   },
   actions: {
     createdFunc: function ({commit}, payload) {
       return commit("created", {details: payload})
+    },
+    completeRace: function({commit}, payload) {
+      console.log('actions', payload)
+      return commit("completeRace", {typingSpeed: payload})
     }
   },
   modules: {
   },
   getters: {
     getId: function (state) {
-      console.log(state.userDetails)
-      return state.userDetails.id;
+      console.log(state.userInfo)
+      return state.userInfo.id;
     },
     getUsername: function (state) {
-      return state.userDetails.username;
+      return state.userInfo.username;
     },
     getRaces: function (state) {
-      return state.userDetails.races_completed;
+      return +state.userInfo.races_completed;
     },
     getAvgSpeed: function (state) {
-      return state.userDetails.average_speed;
+      return state.userInfo.average_speed;
     },
+    getUserInfo: function (state) {
+      return state.userInfo
+    }
   }
 })
