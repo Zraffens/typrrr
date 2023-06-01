@@ -16,8 +16,9 @@ import { mapActions } from "vuex";
   data() {
     return {
       userDetails: {},
-      races: localStorage.getItem('races_completed'),
-      avgSpeed: localStorage.getItem('average_speed')
+      races: localStorage.getItem("races_completed"),
+      avgSpeed: localStorage.getItem("average_speed"),
+      best: localStorage.getItem("best")
     };
   },
   components: {
@@ -35,28 +36,27 @@ import { mapActions } from "vuex";
         this.userDetails = userDetails;
         console.log(userDetails);
         this.createdFunc({ details: userDetails });
-        console.log('abhinav', this.userInfo)
+        console.log("abhinav", this.userInfo);
         // this.$store.dispatch("createdFunc", { userDetails });
         // console.log(this.$store.getters.getUserDetails);
         localStorage.setItem("loggedIn", "true");
       })
       .catch((err) => {
-        if (err.response.status == "401") {
           localStorage.setItem("username", "Guest");
-          const races = localStorage.getItem('races_completed') ? localStorage.getItem('races_completed') : 0
+          const races = localStorage.getItem("races_completed")
+            ? localStorage.getItem("races_completed")
+            : 0;
           const userInfo = {
-            username: 'Guest',
+            username: "Guest",
             races_completed: +this.races,
-            average_speed: +this.avgSpeed
-          }
-          this.createdFunc({details: userInfo})
-        }
+            average_speed: +this.avgSpeed,
+            best: +this.best
+          };
+          this.createdFunc({ details: userInfo });
       });
   },
   computed: {
-     ...mapState([
-      'userInfo'
-     ]),
+    ...mapState(["userInfo"]),
   },
   methods: {
     ...mapActions(["createdFunc"]),
@@ -73,7 +73,6 @@ export default class App extends Vue {}
 }
 
 .wrong {
-  background: red;
-  color: white;
+  color: red;
 }
 </style>

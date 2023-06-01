@@ -1,7 +1,6 @@
 <template>
-  <div id="line-container">
-    <canvas id="line-chart" width="400" height="400"></canvas>
-    {{ words }} {{ speed }}
+  <div id="line-container" v-if="speed" lazy>
+    <canvas id="myChart" width="400" height="400"></canvas>
   </div>
 </template>
 
@@ -13,48 +12,60 @@ Chart.register(...registerables);
 
 @Options({
   props: {
-    times: Array,
     words: Array,
   },
   computed: {
     speed() {
       const speedList = [];
       for (const i in this.words) {
-        speedList.push((this.words[i] / 5) * 60);
+        speedList.push(Math.round((this.words[i] / 2) * 60));
       }
+      speedList.shift();
       return speedList;
+    },
+    times() {
+      const times = [];
+      for (let i = 1; i <= this.speed.length; i++) {
+        times.push(i * 2 + " seconds");
+      }
+      times.shift();
+      return times;
     },
   },
   mounted() {
-    const ctx = <HTMLCanvasElement>document.getElementById("line-chart");
-    const labels = this.times;
-    const data = {
-      labels: labels,
-      datasets: [
-        {
-          label: "My First Dataset",
-          data: this.speed,
-          fill: false,
-          borderColor: "rgb(75, 192, 192)",
-          tension: 0.1,
-        },
-      ],
-    };
-    const config = {
+    console.log("speed", this.speed);
+    const ctx = <HTMLCanvasElement>document.getElementById("myChart");
+    var myChart = new Chart(ctx, {
       type: "line",
-      data: data,
-    };
-    const stackedLine = new Chart(ctx, {
-    type: 'line',
-    data: this.speed,
-    options: {
+      data: {
+        labels: this.times,
+        datasets: [
+          {
+            label: "Speed",
+            data: this.speed,
+            borderColor: "#42b983",
+            backgroundColor: "#42b983",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
         scales: {
-            y: {
-                stacked: true
-            }
-        }
-    }
-});
+          y: {
+            ticks: {
+              color: "#faecd0",
+            },
+            beginAtZero: true,
+          },
+          x: {
+            ticks: {
+              color: "#faecd0",
+            },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
   },
 })
 export default class DataLine extends Vue {}
@@ -62,7 +73,7 @@ export default class DataLine extends Vue {}
 
 <style>
 #chart-container {
-  width: 50vw;
+  width: 40vw;
   background: #222;
   padding: 2em;
   margin: 2em auto 2em auto;

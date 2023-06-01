@@ -10,8 +10,8 @@
       <h3 class="stat">Average Speed: {{ avgSpeed }}wpm</h3>
       <h3 class="stat">Best Race: 0wpm</h3>
       <h3 class="stat">Races Completed: {{ races }}</h3>
-      <DataChart :chartData="JSON.parse(keyData)" />
-      {{keyData}}
+      <DataChart :chartData="filteredKeyData" />
+      {{ filteredKeyData }}
     </div>
   </div>
 </template>
@@ -20,25 +20,51 @@
 import { Options, Vue } from "vue-class-component";
 import axiosInstance from "../axios";
 import TypingField from "@/components/TypingField.vue"; // @ is an alias to /src
-import DataChart from "../components/DataChart.vue"
+import DataChart from "../components/DataChart.vue";
 
 @Options({
   components: {
     TypingField,
-    DataChart
+    DataChart,
   },
   data() {
     return {
       id: localStorage.getItem("id"),
-      username: localStorage.getItem('username'),
-      races: localStorage.getItem('races_completed'),
-      avgSpeed: localStorage.getItem('average_speed'),
-      keyData: localStorage.getItem('key_data')
-    }
-    }
+      username: localStorage.getItem("username"),
+      races: localStorage.getItem("races_completed"),
+      avgSpeed: localStorage.getItem("average_speed"),
+      keyData: localStorage.getItem("key_data"),
+    };
   },
-    
-)
+  computed: {
+    filteredKeyData: function () {
+      if (!this.keyData) {
+        return {}
+      }
+      const keyData: {a: number} = JSON.parse(this.keyData)
+      // console.log(Object.entries(keyData))
+      const sortedKeys = Object.entries(keyData).sort((a, b) => {
+        return b[1] - a[1];
+      });
+      const sliced = sortedKeys.slice(0, 10)
+      const obj: { [key: string]: number } = sliced.reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {} as { [key: string]: number });
+
+      let slicedObject: { [key: string]: Number } = {}
+      let count = 0;
+      // for (const key in sortedWrongKeys) {
+      //   if (sortedWrongKeys.hasOwnProperty(key) && count < 5) {
+      //     slicedObject[key] = sortedWrongKeys[key];
+      //     count++;
+      //   }
+      // }
+      // console.log(sortedWrongKeys, this.keyData)
+      return obj 
+    },
+  },
+})
 export default class Home extends Vue {}
 </script>
 

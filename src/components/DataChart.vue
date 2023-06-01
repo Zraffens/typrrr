@@ -1,6 +1,6 @@
 <template>
-  <div id="chart-container">
-    <canvas id="data-chart" width="400" height="400"></canvas>
+  <div v-if="Object.keys(chartData).length" id="chart-container">
+    <canvas id="dataChart" width="400" height="400"></canvas>
   </div>
 </template>
 
@@ -21,48 +21,53 @@ Chart.register(...registerables);
     };
   },
   mounted() {
-    const ctx = <HTMLCanvasElement>document.getElementById("data-chart");
-    const keys = this.keys
-    const values = this.values
-    const myChart: Chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: keys,
-        datasets: [
-          {
-            label: "Missed Keys",
-            data: values,
-            backgroundColor: [
-              "rgba(255, 99, 132, 0.2)",
-              "rgba(54, 162, 235, 0.2)",
-              "rgba(255, 206, 86, 0.2)",
-              "rgba(75, 192, 192, 0.2)",
-              "rgba(153, 102, 255, 0.2)",
-              "rgba(255, 159, 64, 0.2)",
-            ],
-            borderColor: [
-              "rgba(255, 99, 132, 1)",
-              "rgba(54, 162, 235, 1)",
-              "rgba(255, 206, 86, 1)",
-              "rgba(75, 192, 192, 1)",
-              "rgba(153, 102, 255, 1)",
-              "rgba(255, 159, 64, 1)",
-            ],
-            borderWidth: 1,
+    // console.log(typeof JSON.parse(this.chartData))
+    // const keys = Object.values(this.chartData)
+    // const values = this.values
+    // let keys = []
+    console.log('data', this.chartData)
+    console.log(Boolean(this.chartData))
+    // console.log(keys, values)
+    var data = {
+      labels: this.keys,
+      datasets: [{
+        label: 'Errors',
+        data: this.values,
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8B4513', '#FF6384', '#32CD32', '#FF69B4'],
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
+    };
+
+    // Configuration options
+    var options = {
+      responsive: true,
+      scales: {
+        y: {
+          color: '#000000',
+          ticks: {
+          stepSize: 1,
+            color: '#faecd0',
+            fontSize: 30
           },
-        ],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            ticks: {
-              stepSize: 0.5
-            },
-            beginAtZero: true,
+          beginAtZero: true
+        }, 
+        x: {
+          color: '#000000',
+          ticks: {
+            color: '#faecd0',
           },
-        },
-      },
+          beginAtZero: true
+        }
+      }
+    };
+
+    // Create the chart
+    var ctx = document.getElementById('dataChart') as HTMLCanvasElement;
+    var myChart = new Chart(ctx, {
+      type: 'bar',
+      data: data,
+      options: options
     });
   },
 })
@@ -75,5 +80,8 @@ export default class DataChart extends Vue {}
   background: #222;
   padding: 2em;
   margin: 2em auto 2em auto;
-} 
+}
+canvas {
+  background: #323437;
+}
 </style>

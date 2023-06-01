@@ -2,7 +2,7 @@
   <div class="container">
     <div class="race-details flex">
       <div class="">
-        <h5 id="init-countdown">The race will start in 10</h5>
+        <h5 id="init-countdown">The race will start in</h5>
       </div>
       <div class="flex bubbles">
         <div class="bubble" id="speed">{{ speed }} wpm</div>
@@ -10,18 +10,9 @@
       </div>
     </div>
     <div class="field">
-      <div id="text">
-        {{ text }}
+      <div id="text" @keydown="keydown($event)">
+        <span v-for="letter in text">{{ letter }}</span>
       </div>
-      <input
-        onpaste="return false"
-        autocomplete="off"
-        @keydown="keydown($event)"
-        type="text"
-        name=""
-        id="textField"
-        placeholder="Type the above text here when the race begins"
-      />
     </div>
     <div v-if="finished" class="align-center">
       <button @click="tryAgain" class="button race-again enlarge">
@@ -35,10 +26,10 @@
       </button>
     </div>
     <div v-if="finished" id="replayed-text"></div>
-    <div v-if="finished">
+    <div v-if="finished" lazy>
       You had your mistakes in the following keys.
       <DataChart :chartData="wrongKeys" />
-      <DataLine :times="secsData" :words="filteredInstantSpeed" />
+      <DataLine :words="wordsData" />
     </div>
   </div>
 </template>
@@ -80,6 +71,8 @@ import DataLine from "./DataLine.vue";
       wrong: false,
       timeleft: 59,
       wordsTyped: 0,
+      charsTyped: 0,
+      started: false,
       finished: false,
       times: [],
       loggedIn: localStorage.getItem("loggedIn") == "true" ? true : false,
@@ -88,9 +81,7 @@ import DataLine from "./DataLine.vue";
       races: localStorage.getItem("races_completed"),
       avgSpeed: localStorage.getItem("average_speed"),
       wrongKeys: {},
-      wordsPerFive: [],
-      countPerFive: 0,
-      secsData: [],
+      wordsData: [],
       filteredInstantSpeed: [],
     };
   },
@@ -100,9 +91,6 @@ import DataLine from "./DataLine.vue";
     },
     accuracy: function (): number {
       return Math.round((1 - this.wrongPressed / this.text.length) * 100);
-    },
-    textField: function (): HTMLInputElement {
-      return <HTMLInputElement>document.querySelector("#textField");
     },
     totalCounter: function (): number {
       return this.text.split(" ").length * 3 - 1;
@@ -120,56 +108,61 @@ import DataLine from "./DataLine.vue";
   created() {},
   methods: {
     ...mapActions(["completeRace"]),
-    // initialCountdown() {
-    //   const self = this;
-    //   var timeleft = 5;
-    //   var initCountdown = <HTMLDivElement>(
-    //     document.getElementById("init-countdown")
-    //   );
-    //   var downloadTimer = setInterval(function () {
-    //     if (timeleft <= 0) {
-    //       clearInterval(downloadTimer);
-    //       initCountdown.innerHTML = "THE RACE BEGINS!";
-    //     } else {
-    //       initCountdown.innerHTML = "The race will start in " + timeleft;
-    //     }
-    //     timeleft -= 1;
-    //     if (timeleft < 0 && !self.finished) {
-    //       self.countdown(self.totalCounter);
-    //       return;
-    //     }
-    //   }, 1000);
-    // },
+    initialCountdown() {
+      const self = this;
+      var timeleft = 5;
+      var initCountdown = <HTMLDivElement>(
+        document.getElementById("init-countdown")
+      );
+      var downloadTimer = setInterval(function () {
+        if (timeleft <= 0) {
+          clearInterval(downloadTimer);
+          initCountdown.innerHTML = "THE RACE BEGINS!";
+        } else {
+          initCountdown.innerHTML = "The race will start in " + timeleft;
+        }
+        timeleft -= 1;
+        if (timeleft < 0 && !self.finished) {
+          self.countdown(self.totalCounter);
+          self.started = true;
+          return;
+        }
+      }, 1000);
+    },
     keydown(e: KeyboardEvent) {
-      if (this.counter == 0 && this.wrongCounter == 0) {
-        this.countdown(this.totalCounter);
-      }
-      const rightKey = this.text[this.counter];
-      if (this.ignoredKeys.includes(e.key) || this.textField.readOnly) {
+      if (this.ignoredKeys.includes(e.key) || !this.started) {
         // terminates the function for unnecessary keys
         return;
       }
       this.times.push({ timestamp: e.timeStamp, key: e.key }); // records the keystrokes
+      const currentLetter = document.getElementById("text")?.childNodes[
+        this.counter
+      ] as HTMLSpanElement;
       if (e.key === "Backspace") {
         if (this.counter === 0) {
           return;
         }
         if (this.wrong) {
           this.wrongCounter--;
-          this.wrongText(e);
           this.wrong = this.wrongCounter === 0 ? false : true;
+          const currentLetter = document.getElementById("text")?.childNodes[
+            this.counter + this.wrongCounter + 1
+          ] as HTMLSpanElement;
+          currentLetter.classList.remove("animation", "wrong");
+          if (currentLetter.innerText == " ") {
+            currentLetter.style.background = "#333";
+          }
         } else {
           this.counter--;
-          this.written();
+          currentLetter.classList.remove("animation", "written");
         }
         return;
       }
-      if (e.key === rightKey && !this.wrong) {
+      if (e.key === this.text[this.counter] && !this.wrong) {
         if (e.key == " ") {
-          this.wordsPerFive[this.countPerFive]++;
           this.wordsTyped++;
-          this.textField.value = "";
         }
+        this.charsTyped++;
         this.counter++;
         this.written();
         if (this.counter === this.text.length) {
@@ -178,48 +171,63 @@ import DataLine from "./DataLine.vue";
         }
       } else {
         this.wrong = true;
-        this.wrongCounter++;
-        this.wrongText();
-        if (this.wrongCounter === 1) {
-          this.wrongKeys[rightKey] = this.wrongKeys[rightKey]
-            ? this.wrongKeys[rightKey] + 1
-            : 1;
-          this.wrongPressed++;
+        const wrongLetter = document.getElementById("text")?.childNodes[
+            this.counter + this.wrongCounter + 1
+      ] as HTMLSpanElement;
+        console.log(wrongLetter.innerText)
+        if (wrongLetter.innerText in this.wrongKeys) {
+          this.wrongKeys[wrongLetter.innerText]++;
+        } else {
+          this.wrongKeys[wrongLetter.innerText] = 1;
         }
+        this.wrongCounter++;
+        this.wrongPressed++;
+        this.wrongText();
       }
     },
     // Marks the wrongly typed text as red
     wrongText(key: KeyboardEvent) {
-      const text = <HTMLDivElement>document.querySelector("#text");
-      text.innerHTML = `<span class="written">${this.text.slice(
-        0,
-        this.counter
-      )}</span><span class="wrong">${this.text.slice(
-        this.counter,
+      // const text = <HTMLDivElement>document.querySelector("#text");
+      // text.innerHTML = `<span class="written">${this.text.slice(
+      //   0,
+      //   this.counter
+      // )}</span><span class="wrong">${this.text.slice(
+      //   this.counter,
+      //   this.counter + this.wrongCounter
+      // )}</span>${this.text.slice(
+      //   this.counter + this.wrongCounter,
+      //   this.text.length + 1
+      // )}`;
+      const currentLetter = document.getElementById("text")?.childNodes[
         this.counter + this.wrongCounter
-      )}</span>${this.text.slice(
-        this.counter + this.wrongCounter,
-        this.text.length + 1
-      )}`;
+      ] as HTMLSpanElement;
+      currentLetter.classList.add("animation", "wrong");
+      if (currentLetter.innerText == " ") {
+        currentLetter.style.background = "red";
+      }
     },
     // Marks the correctly typed text as green
     written() {
-      const text = <HTMLDivElement>document.querySelector("#text");
-      text.innerHTML = `<span class="written">${this.text.slice(
-        0,
+      // const text = <HTMLDivElement>document.querySelector("#text");
+      // text.innerHTML = `<span class="written">${this.text.slice(
+      //   0,
+      //   this.counter
+      // )}</span>${this.text.slice(this.counter, this.text.length + 1)}`;
+      const currentLetter = document.getElementById("text")?.childNodes[
         this.counter
-      )}</span>${this.text.slice(this.counter, this.text.length + 1)}`;
+      ] as HTMLSpanElement;
+      currentLetter.classList.add("animation", "written");
     },
     // A basic countdown function
     countdown(total: number) {
-      this.textField.setAttribute("placeholder", "");
-      console.log("executed");
       let progress = <HTMLHeadingElement>(
         document.getElementById("init-countdown")
       );
+      this.timeleft--;
       let speed = <HTMLDivElement>document.getElementById("speed");
       const self = this;
       this.timeleft = total;
+      let typed = 0;
       var downloadTimer = setInterval(function () {
         self.timeleft--;
         if (self.timeleft <= 0 || self.finished) {
@@ -228,38 +236,28 @@ import DataLine from "./DataLine.vue";
         } else {
           progress.innerHTML = "Timer: " + self.timeleft;
         }
-        if ((self.totalCounter - self.timeleft) % 5 === 0) {
-          self.countPerFive++;
+        if (self.timeleft % 2 == 0) {
+          const avg = self.text.length / self.words.length;
+          console.log(avg);
+          let grossWords: Number = (self.charsTyped - typed) / avg;
+          console.log(self.charsTyped - typed, "gross", self.text.length);
+          self.wordsData.push(grossWords);
+          console.log("typed", typed, self.wordsData);
+          typed = self.charsTyped;
         }
         if (self.timeleft < 1) {
           self.finished = true;
-          self.textField.setAttribute("readonly", true);
         }
       }, 1000);
     },
     async finishedFunc() {
+      this.started = false;
       this.finished = true;
       let progress = <HTMLHeadingElement>(
         document.getElementById("init-countdown")
       );
       progress.innerHTML = "Finished";
-      this.wordsPerFive[this.countPerFive + 1] = "finished";
-      console.log(this.wordsPerFive);
-      let counter = 0;
-      for (const i in this.wordsPerFive) {
-        console.log(i, this.wordsPerFive[i]);
-        if (this.wordsPerFive[i] != "finished") {
-          this.filteredInstantSpeed.push(parseInt(this.wordsPerFive[i]));
-          counter++;
-        } else {
-          break;
-        }
-      }
-      for (let i = 0; i < counter; i++) {
-        this.secsData[i] = i;
-      }
-      console.log("secsdata", this.secsData, this.filteredInstantSpeed);
-      this.textField.setAttribute("readonly", true);
+
       if (this.loggedIn) {
         const new_avg =
           (+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1);
@@ -294,14 +292,9 @@ import DataLine from "./DataLine.vue";
             newData[key2] = previousData[key2];
           }
         }
-        console.log(newData);
         const newdt = JSON.stringify(newData);
-        console.log("stringified", newdt, "un", newData);
-        console.log(previousData, this.wrongKeys, newData);
         localStorage.setItem("key_data", newdt);
-        console.log(localStorage.getItem("key_data"));
         this.completeRace("log", +this.speed);
-        console.log(this.userInfo);
 
         await axiosInstance
           .patch(
@@ -334,8 +327,6 @@ import DataLine from "./DataLine.vue";
         localStorage.setItem("key_data", newdt);
         this.races = +this.races + 1;
         this.completeRace(+this.speed);
-        console.log(this.userInfo);
-        console.log(this.races);
       }
       console.log("FINISHED");
     },
@@ -359,7 +350,6 @@ import DataLine from "./DataLine.vue";
       );
       properlyTimedKeys.forEach((keyTime: keyTiming) => {
         setTimeout(function () {
-          console.log(keyTime.key);
           if (keyTime.key === "Backspace") {
             replayedText.innerHTML = replayedText.innerHTML.slice(
               0,
@@ -373,9 +363,7 @@ import DataLine from "./DataLine.vue";
     },
     tryAgain() {
       this.finished = false;
-      this.textField.removeAttribute("readonly");
-      this.textField.value = "";
-      // this.initialCountdown();
+      this.initialCountdown();
       this.counter = 0;
       this.wrongCounter = 0;
       this.wrongPressed = 0;
@@ -420,20 +408,19 @@ import DataLine from "./DataLine.vue";
         },
       }).then((res) => {
         this.quotes = res.data;
-        console.log("quote", res.data);
         this.text =
           res.data.results[
             Math.floor(Math.random() * res.data.results.length)
           ].quote;
       });
-      for (let i = 0; i < this.totalCounter / 5; i++) {
-        this.wordsPerFive.push(0);
-        console.log("created", this.wordsPerFive, this.totalCounter);
-      }
     },
   },
   async mounted() {
-    // this.initialCountdown();
+    const self = this;
+    document.addEventListener("keydown", function (event) {
+      self.keydown(event);
+    });
+    this.initialCountdown();
     await this.generateQuote();
   },
 })
@@ -455,6 +442,10 @@ li {
 }
 a {
   color: #42b983;
+}
+
+.animation {
+  transition: color 0.2s ease;
 }
 
 #init-countdown {
