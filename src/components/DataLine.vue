@@ -18,14 +18,14 @@ Chart.register(...registerables);
     speed() {
       const speedList = [];
       for (const i in this.words) {
-        speedList.push(Math.round((this.words[i] / 2) * 60));
+        speedList.push(Math.round((this.words[i] / 3) * 60));
       }
       return speedList;
     },
     times() {
       const times = [];
       for (let i = 0; i < this.speed.length; i++) {
-        times.push(i * 2 + " seconds");
+        times.push(i * 3 + " sec");
       }
       times.shift();
       return times;

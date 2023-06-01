@@ -1,6 +1,6 @@
 <template>
   <div id="chart-container">
-    <canvas v-if="Object.keys(chartData).length" id="dataChart" width="400" height="400"></canvas>
+    <canvas id="dataChart" width="400" height="400"></canvas>
   </div>
 </template>
 

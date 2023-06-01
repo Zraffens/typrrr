@@ -28,7 +28,7 @@
     <div v-if="finished" id="replayed-text"></div>
     <div v-if="finished" lazy>
       You had your mistakes in the following keys.
-      <DataChart :chartData="wrongKeys" />
+      <DataChart v-if="wrongKeys" :chartData="wrongKeys" />
       <DataLine :words="wordsData" />
     </div>
   </div>
@@ -188,17 +188,6 @@ import DataLine from "./DataLine.vue";
     },
     // Marks the wrongly typed text as red
     wrongText(key: KeyboardEvent) {
-      // const text = <HTMLDivElement>document.querySelector("#text");
-      // text.innerHTML = `<span class="written">${this.text.slice(
-      //   0,
-      //   this.counter
-      // )}</span><span class="wrong">${this.text.slice(
-      //   this.counter,
-      //   this.counter + this.wrongCounter
-      // )}</span>${this.text.slice(
-      //   this.counter + this.wrongCounter,
-      //   this.text.length + 1
-      // )}`;
       const currentLetter = document.getElementById("text")?.childNodes[
         this.counter + this.wrongCounter
       ] as HTMLSpanElement;
@@ -209,11 +198,6 @@ import DataLine from "./DataLine.vue";
     },
     // Marks the correctly typed text as green
     written() {
-      // const text = <HTMLDivElement>document.querySelector("#text");
-      // text.innerHTML = `<span class="written">${this.text.slice(
-      //   0,
-      //   this.counter
-      // )}</span>${this.text.slice(this.counter, this.text.length + 1)}`;
       const currentLetter = document.getElementById("text")?.childNodes[
         this.counter
       ] as HTMLSpanElement;
@@ -237,7 +221,7 @@ import DataLine from "./DataLine.vue";
         } else {
           progress.innerHTML = "Timer: " + self.timeleft;
         }
-        if (self.timeleft % 2 == 0) {
+        if (self.timeleft % 3 == 0) {
           const avg = self.text.length / self.words.length;
           console.log(avg);
           let grossWords: Number = (self.charsTyped - typed) / avg;
@@ -258,7 +242,7 @@ import DataLine from "./DataLine.vue";
         document.getElementById("init-countdown")
       );
       progress.innerHTML = "Finished";
-
+      this.speed = (this.words / (this.totalCounter - this.timeleft)) * 60
       if (this.loggedIn) {
         const new_avg =
           Math.round((+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1));
@@ -399,6 +383,7 @@ import DataLine from "./DataLine.vue";
       this.timeleft = 59;
       this.wordsTyped = 0;
       this.text = "";
+      this.charsTyped = 0
       this.generateQuote();
       this.written();
     },
@@ -429,7 +414,7 @@ import DataLine from "./DataLine.vue";
       const tag = tags[Math.floor(Math.random() * tags.length)];
       await axiosInstance({
         method: "GET",
-        url: `https://api.paperquotes.com/apiv1/quotes/?minlength=50&tags=${tag}&order=-likes`,
+        url: `https://api.paperquotes.com/apiv1/quotes/?minlength=125&tags=${tag}&order=-likes`,
         headers: {
           Authorization: "Token cc2218fa4c809aea84c71c84efd2b57e9f2911bc",
         },
