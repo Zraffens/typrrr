@@ -2,7 +2,7 @@
   <div class="flex">
     <img class="profile-logo profile-card" src="../assets/img/guest.png" alt="">
     <div class="stats" v-if="loaded">
-      <p class="username">{{ username }}</p>
+      <p class="username">{{ username || "Guest" }}</p>
       <p class="races">Races: {{ races }}</p>
       <div class="avg-speed">
         Average Speed: {{ Math.round(avgspeed) }}wpm

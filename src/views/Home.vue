@@ -38,6 +38,7 @@ import DataChart from "../components/DataChart.vue";
   },
   computed: {
     filteredKeyData: function () {
+      console.log(this.username)
       console.log('asdf', this.keyData)
       if (!this.keyData) {
         return {}
