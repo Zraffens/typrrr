@@ -376,6 +376,10 @@ hr {
   clear: both;
 }
 
+.center {
+  text-align: center;
+}
+
 /* Media Queries
   –––––––––––––––––––––––––––––––––––––––––––––––––– */
 /*
