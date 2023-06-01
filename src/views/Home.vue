@@ -7,7 +7,7 @@
     <hr />
     <div class="user-details">
       <h2 class="details-heading">{{ username }}'s typing stats</h2>
-      <h3 class="stat">Average Speed: {{ avgSpeed }} wpm</h3>
+      <h3 class="stat">Average Speed: {{ Math.round(avgSpeed) }} wpm</h3>
       <h3 class="stat">Best Speed: {{ best || 0 }} wpm</h3>
       <h3 class="stat">Races Completed: {{ races }}</h3>
       <DataChart :chartData="filteredKeyData" />

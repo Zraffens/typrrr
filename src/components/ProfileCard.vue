@@ -5,7 +5,7 @@
       <p class="username">{{ username }}</p>
       <p class="races">Races: {{ races }}</p>
       <div class="avg-speed">
-        Average Speed: {{ avgspeed }}wpm
+        Average Speed: {{ Math.round(avgspeed) }}wpm
       </div>
     </div>
     <div v-else>loading...</div>
