@@ -2,8 +2,8 @@
   <div class="navbar">
     <div class="flex container parent">
       <ul class="small-links">
-        <li class="enlarge"><a href="">Blog</a></li>
-        <li class="enlarge"><a href="">About</a></li>
+        <li class="enlarge"><router-link to="/blog">Blog</router-link></li>
+        <li class="enlarge"><router-link to="/about">About</router-link></li>
       </ul>
       <div class="align-center">
         <h1 id="brand" class="enlarge">
