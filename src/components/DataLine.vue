@@ -20,12 +20,11 @@ Chart.register(...registerables);
       for (const i in this.words) {
         speedList.push(Math.round((this.words[i] / 2) * 60));
       }
-      speedList.shift();
       return speedList;
     },
     times() {
       const times = [];
-      for (let i = 1; i <= this.speed.length; i++) {
+      for (let i = 0; i < this.speed.length; i++) {
         times.push(i * 2 + " seconds");
       }
       times.shift();

@@ -37,9 +37,14 @@ import { mapActions } from "vuex";
         console.log(userDetails);
         this.createdFunc({ details: userDetails });
         console.log("abhinav", this.userInfo);
-        // this.$store.dispatch("createdFunc", { userDetails });
-        // console.log(this.$store.getters.getUserDetails);
+        this.$store.dispatch("createdFunc", { userDetails });
+        console.log(this.$store.getters.getUserDetails);
         localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("username", userDetails.username)
+        localStorage.setItem("email", userDetails.email)
+        localStorage.setItem("races_completed", userDetails.races_completed)
+        localStorage.setItem("average_speed", userDetails.average_speed)
+        localStorage.setItem("best_speed", userDetails.best_speed)
       })
       .catch((err) => {
           localStorage.setItem("username", "Guest");

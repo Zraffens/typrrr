@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <div class="profile-logo profile-card"></div>
+  <div class="flex">
+    <img class="profile-logo profile-card" src="../assets/img/guest.png" alt="">
     <div class="stats" v-if="loaded">
-      <p class="username">{{ userInfo.details.username }}</p>
+      <p class="username">{{ username }}</p>
       <p class="races">Races: {{ races }}</p>
       <div class="avg-speed">
-        Average Speed: {{ userInfo.details.average_speed }}wpm
+        Average Speed: {{ avgspeed }}wpm
       </div>
     </div>
-    <div v-else>loading</div>
+    <div v-else>loading...</div>
   </div>
 </template>
 
@@ -20,18 +20,15 @@ import axiosInstance from "../axios";
 
 @Options({
   computed: {
-    userInfo() {
-      return this.$store.getters.getUserInfo;
-    },
-    computedRaces() {
-      return this.$store.getters.getRaces;
-    },
   },
   data() {
     return {
       loggedIn: localStorage.getItem("loggedIn") == "true" ? true : false,
       loaded: false,
-      races: 0,
+      races: localStorage.getItem("races_completed"),
+      best: localStorage.getItem("best_speed"),
+      avgspeed: localStorage.getItem("average_speed"),
+      username: localStorage.getItem("username")
     };
   },
   mounted() {
@@ -43,9 +40,6 @@ import axiosInstance from "../axios";
   },
 
   watch: {
-    computedRaces() {
-      this.races = this.$store.getters.getRaces;
-    },
   },
 })
 export default class ProfileCard extends Vue {}

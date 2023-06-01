@@ -15,6 +15,7 @@
           <Suspense>
             <!-- <ProfileCard /> -->
             <template #fallback><LoadingProfile /></template>
+            <template #default><ProfileCard /></template>
           </Suspense>
         </div>
       </div>
@@ -77,10 +78,10 @@ ul {
 
 .profile-logo {
   flex: 1;
-  border-radius: 50%;
-  background: white;
+  /* border-radius: 50%; */
+  background: url(../assets/img/guest.png)!important;
   width: 100%;
-  height: 70px;
+  height: 55px;
 }
 
 .stats {
@@ -90,5 +91,10 @@ ul {
 
 .stats p {
   margin: 0;
+}
+@media screen and (max-width: 768px) {
+  .profile-logo {
+    height: 30px;
+  }
 }
 </style>

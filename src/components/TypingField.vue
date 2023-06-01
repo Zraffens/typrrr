@@ -139,7 +139,7 @@ import DataLine from "./DataLine.vue";
         this.counter
       ] as HTMLSpanElement;
       if (e.key === "Backspace") {
-        if (this.counter === 0) {
+        if (this.counter === 0 && this.wroungCounter === 0) {
           return;
         }
         if (this.wrong) {
@@ -148,6 +148,7 @@ import DataLine from "./DataLine.vue";
           const currentLetter = document.getElementById("text")?.childNodes[
             this.counter + this.wrongCounter + 1
           ] as HTMLSpanElement;
+          console.log(currentLetter.innerText)
           currentLetter.classList.remove("animation", "wrong");
           if (currentLetter.innerText == " ") {
             currentLetter.style.background = "#333";
@@ -260,13 +261,14 @@ import DataLine from "./DataLine.vue";
 
       if (this.loggedIn) {
         const new_avg =
-          (+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1);
+          Math.round((+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1));
         localStorage.setItem("average_speed", `${new_avg}`);
         this.avgSpeed = new_avg;
         localStorage.setItem("races_completed", `${+this.races + 1}`);
         this.races = +this.races + 1;
         const prevData = localStorage.getItem("key_data");
         const previousData = JSON.parse(prevData || "{}");
+        const best = +previousData.best_speed || 0
         const newData: keys = {};
         for (
           let i = 0;
@@ -292,6 +294,8 @@ import DataLine from "./DataLine.vue";
             newData[key2] = previousData[key2];
           }
         }
+        const newbest = this.speed > best ? this.speed : best
+        localStorage.setItem("best_speed", newbest)
         const newdt = JSON.stringify(newData);
         localStorage.setItem("key_data", newdt);
         this.completeRace("log", +this.speed);
@@ -302,6 +306,7 @@ import DataLine from "./DataLine.vue";
             {
               races_completed: +this.races + 1,
               average_speed: new_avg,
+              best_speed: newbest,
               key_data: newdt,
             },
             { headers: { "Content-type": "application/json; charset=UTF-8" } }
@@ -309,22 +314,44 @@ import DataLine from "./DataLine.vue";
           .then((data) => console.log(data));
       } else {
         const new_avg =
-          (+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1);
+          Math.round((+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1));
         this.avgSpeed = new_avg;
         localStorage.setItem("average_speed", `${new_avg}`);
         localStorage.setItem("races_completed", `${+this.races + 1}`);
         const prevData = localStorage.getItem("key_data");
-        const previousData = JSON.parse(prevData || "");
         const newData: keys = {};
-        for (const key in previousData) {
-          if (Object.keys(this.wrongKeys).includes(key)) {
-            newData[key] = previousData[key] + this.wrongKeys[key];
-          } else {
-            newData[key] = previousData[key];
+        const previousData = prevData ? JSON.parse(prevData) : {}
+        const best = localStorage.getItem("best_speed") || 0
+        for (
+          let i = 0;
+          i <
+          Object.keys(this.wrongKeys).length + Object.keys(previousData).length;
+          i++
+        ) {
+          const key1 =
+            i < Object.keys(this.wrongKeys).length
+              ? Object.keys(this.wrongKeys)[i]
+              : "";
+          const key2 =
+            i < Object.keys(previousData).length
+              ? Object.keys(previousData)[i]
+              : "";
+          if (key1 && !Object.keys(previousData).includes(key1)) {
+            newData[key1] = this.wrongKeys[key1];
+          } else if (key1 && Object.keys(previousData).includes(key1)) {
+            newData[key1] =
+              parseInt(this.wrongKeys[key1]) + parseInt(previousData[key1]);
+          }
+          if (key2 && !Object.keys(this.wrongKeys).includes(key2)) {
+            newData[key2] = previousData[key2];
           }
         }
+        console.log('notstring', newData)
+        const newbest = this.speed > best ? this.speed : best
+        localStorage.setItem("best_speed", newbest)
         const newdt = JSON.stringify(newData);
         localStorage.setItem("key_data", newdt);
+        console.log('newstringified', newdt)
         this.races = +this.races + 1;
         this.completeRace(+this.speed);
       }

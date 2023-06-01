@@ -7,11 +7,10 @@
     <hr />
     <div class="user-details">
       <h2 class="details-heading">{{ username }}'s typing stats</h2>
-      <h3 class="stat">Average Speed: {{ avgSpeed }}wpm</h3>
-      <h3 class="stat">Best Race: 0wpm</h3>
+      <h3 class="stat">Average Speed: {{ avgSpeed }} wpm</h3>
+      <h3 class="stat">Best Speed: {{ best || 0 }} wpm</h3>
       <h3 class="stat">Races Completed: {{ races }}</h3>
       <DataChart :chartData="filteredKeyData" />
-      {{ filteredKeyData }}
     </div>
   </div>
 </template>
@@ -33,11 +32,13 @@ import DataChart from "../components/DataChart.vue";
       username: localStorage.getItem("username"),
       races: localStorage.getItem("races_completed"),
       avgSpeed: localStorage.getItem("average_speed"),
+      best: localStorage.getItem("best_speed"),
       keyData: localStorage.getItem("key_data"),
     };
   },
   computed: {
     filteredKeyData: function () {
+      console.log('asdf', this.keyData)
       if (!this.keyData) {
         return {}
       }
@@ -51,16 +52,6 @@ import DataChart from "../components/DataChart.vue";
         acc[key] = value;
         return acc;
       }, {} as { [key: string]: number });
-
-      let slicedObject: { [key: string]: Number } = {}
-      let count = 0;
-      // for (const key in sortedWrongKeys) {
-      //   if (sortedWrongKeys.hasOwnProperty(key) && count < 5) {
-      //     slicedObject[key] = sortedWrongKeys[key];
-      //     count++;
-      //   }
-      // }
-      // console.log(sortedWrongKeys, this.keyData)
       return obj 
     },
   },
