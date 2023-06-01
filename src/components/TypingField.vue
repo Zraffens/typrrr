@@ -26,9 +26,11 @@
       </button>
     </div>
     <div v-if="finished" id="replayed-text"></div>
-    <div v-if="finished" lazy>
-      You had your mistakes in the following keys.
+    <div class="center" v-if="finished" lazy>
+      <h3 class="center">You had your mistakes in the following keys.</h3>
       <DataChart v-if="wrongKeys" :chartData="wrongKeys" />
+      
+      <h3 class="center">Your speed at different times</h3>
       <DataLine :words="wordsData" />
     </div>
   </div>
@@ -99,9 +101,13 @@ import DataLine from "./DataLine.vue";
       if (this.finished) {
         return this.speed;
       }
-      return Math.round(
+      const speed = Math.round(
         (this.wordsTyped / (this.totalCounter - this.timeleft)) * 60
-      );
+      )
+      if (!Number.isNaN(speed) && Number.isFinite(speed)) {
+        return speed
+      }
+      return 0
     },
     ...mapState(["userInfo"]),
   },
@@ -414,7 +420,7 @@ import DataLine from "./DataLine.vue";
       const tag = tags[Math.floor(Math.random() * tags.length)];
       await axiosInstance({
         method: "GET",
-        url: `https://api.paperquotes.com/apiv1/quotes/?minlength=125&tags=${tag}&order=-likes`,
+        url: `https://api.paperquotes.com/apiv1/quotes/?minlength=75&tags=${tag}&order=-likes`,
         headers: {
           Authorization: "Token cc2218fa4c809aea84c71c84efd2b57e9f2911bc",
         },

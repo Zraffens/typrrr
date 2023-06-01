@@ -44,6 +44,7 @@ Chart.register(...registerables);
       responsive: true,
       scales: {
         y: {
+          suggestedMax: 3,
           color: '#000000',
           ticks: {
           stepSize: 1,

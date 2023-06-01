@@ -11,6 +11,7 @@ import { Options, Vue } from "vue-class-component";
 import { mapGetters } from "vuex";
 import { mapState } from "vuex";
 import { mapActions } from "vuex";
+import { RouteLocationNormalized  } from 'vue-router';
 
 @Options({
   data() {
@@ -66,6 +67,14 @@ import { mapActions } from "vuex";
   methods: {
     ...mapActions(["createdFunc"]),
   },
+  watch: {
+        $route: {
+            immediate: true,
+            handler(to: RouteLocationNormalized , from: RouteLocationNormalized ) {
+                document.title = (to.name as string) + ' ' + '| Typrrr' || 'Typrrr';
+            }
+        }
+    },
 })
 export default class App extends Vue {}
 </script>

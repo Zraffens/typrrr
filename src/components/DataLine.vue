@@ -72,9 +72,17 @@ export default class DataLine extends Vue {}
 
 <style>
 #chart-container {
-  width: 40vw;
+  width: 35vw;
   background: #222;
   padding: 2em;
   margin: 2em auto 2em auto;
 }
+
+#line-container {
+  width: 35vw;
+  background: #222;
+  padding: 2em;
+  margin: 2em auto 2em auto;
+}
+
 </style>
