@@ -107,6 +107,7 @@ import router from "../router";
       const self = this;
       e.preventDefault();
       await axiosInstance.get("https://typrrr-backend.vercel.app/users/").then((res) => {
+        this.usernameExists = false;
         res.data.forEach((i: User) => {
           if (i.username == this.username) {
             this.usernameExists = true;
