@@ -8,7 +8,7 @@
     <div class="user-details">
       <h2 class="details-heading">{{ userInfo.username || 'Guest' }}'s typing stats</h2>
       <h3 class="stat">Average Speed: {{ Math.round(userInfo.average_speed) }} wpm</h3>
-      <h3 class="stat">Best Speed: {{ best || 0 }} wpm</h3>
+      <h3 class="stat">Best Speed: {{ userInfo.best_speed || 0 }} wpm</h3>
       <h3 class="stat">Races Completed: {{ userInfo.races_completed }}</h3>
       <DataChart v-if="Object.keys(filteredKeyData).length" :chartData="filteredKeyData" />
     </div>

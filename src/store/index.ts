@@ -10,6 +10,7 @@ export default createStore({
       races_completed: 0,
       average_speed: 0,
       races_won: 0,
+      best_speed: 0
     },
   },
   mutations: {
@@ -32,6 +33,7 @@ export default createStore({
         races_completed: 0,
         average_speed: 0,
         races_won: 0,
+        best_speed: 0
       };
     },
   },

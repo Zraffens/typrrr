@@ -9,6 +9,10 @@
       <input type="password" v-model="password" name="password" id="password" />
       <input type="submit" value="Submit" class="btn" />
     </form>
+<div v-if="loginError" class="error-message">
+  Invalid username or password.
+</div>
+
     <router-link class="register" to="/register"><button class="btn">Not a User? Register</button></router-link>
   </div>
 </template>
@@ -25,7 +29,8 @@ export default defineComponent({
     return {
       username: "",
       password: "",
-      registered: false
+      registered: false,
+      loginError: false
     };
   },
   mounted() {
@@ -62,7 +67,12 @@ export default defineComponent({
             .catch((err) => {
               // Handle error
             });
-        });
+        })
+        .catch((err) => {
+          if (err.response && err.response.status === 401) {
+            this.loginError = true;
+          }
+        });;
     },
     ...mapActions(["createdFunc"]),
   },
@@ -88,5 +98,6 @@ h1 {
   h5 {
     margin: 1em auto;
   }
+
 
 </style>
