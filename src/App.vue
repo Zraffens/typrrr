@@ -27,25 +27,18 @@ import { RouteLocationNormalized  } from 'vue-router';
   },
   async created() {
     let userDetails: any = {};
-    axiosInstance
-      .get("http://localhost:8000/users/profile/")
+    await axiosInstance
+      .get("https://typrrr-backend.vercel.app/users/profile/")
       .then((res) => {
         for (const key in res.data) {
           localStorage.setItem(key, res.data[key]);
           userDetails[key] = res.data[key];
         }
         this.userDetails = userDetails;
-        console.log(userDetails);
+        console.log('detail', userDetails);
         this.createdFunc({ details: userDetails });
-        console.log("abhinav", this.userInfo);
-        this.$store.dispatch("createdFunc", { userDetails });
-        console.log(this.$store.getters.getUserDetails);
+        console.log('getter', this.$store.getters.getUserDetails, this.getUserInfo);
         localStorage.setItem("loggedIn", "true");
-        localStorage.setItem("username", userDetails.username)
-        localStorage.setItem("email", userDetails.email)
-        localStorage.setItem("races_completed", userDetails.races_completed)
-        localStorage.setItem("average_speed", userDetails.average_speed)
-        localStorage.setItem("best_speed", userDetails.best_speed)
       })
       .catch((err) => {
           localStorage.setItem("username", "Guest");
@@ -63,6 +56,7 @@ import { RouteLocationNormalized  } from 'vue-router';
   },
   computed: {
     ...mapState(["userInfo"]),
+    ...mapGetters(['getUserInfo']),
   },
   methods: {
     ...mapActions(["createdFunc"]),

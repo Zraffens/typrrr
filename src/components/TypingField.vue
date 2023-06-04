@@ -249,6 +249,8 @@ import DataLine from "./DataLine.vue";
       );
       progress.innerHTML = "Finished";
       this.speed = (this.words / (this.totalCounter - this.timeleft)) * 60
+      
+      this.$store.dispatch("completeRace", this.speed);
       if (this.loggedIn) {
         const new_avg =
           Math.round((+this.avgSpeed * +this.races + +this.speed) / (+this.races + 1));
@@ -292,9 +294,9 @@ import DataLine from "./DataLine.vue";
 
         await axiosInstance
           .patch(
-            `http://localhost:8000/users/${this.id}/`,
+            `https://typrrr-backend.vercel.app/users/${this.id}/`,
             {
-              races_completed: +this.races + 1,
+              races_completed: +this.races,
               average_speed: new_avg,
               best_speed: newbest,
               key_data: newdt,
@@ -432,6 +434,7 @@ import DataLine from "./DataLine.vue";
           ].quote;
       });
     },
+    ...mapActions(["createdFunc"]),
   },
   async mounted() {
     const self = this;
@@ -457,9 +460,6 @@ ul {
 li {
   display: inline-block;
   margin: 0 10px;
-}
-a {
-  color: #42b983;
 }
 
 .animation {

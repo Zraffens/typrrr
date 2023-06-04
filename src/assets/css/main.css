@@ -110,11 +110,13 @@ p {
 
 /* Links
   –––––––––––––––––––––––––––––––––––––––––––––––––– */
-a {
-  color: white;
+
+a, .logout {
+  color: #42b983;
   text-decoration: none;
+  cursor: pointer;
 }
-a:hover {
+a:hover, .logout:hover {
   color: #0fa0ce;
 }
 
@@ -194,7 +196,7 @@ textarea,
 select {
   height: 38px;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
-  background-color: #fff;
+  background-color: #222;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   box-shadow: none;

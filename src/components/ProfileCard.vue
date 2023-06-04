@@ -2,10 +2,10 @@
   <div class="flex">
     <img class="profile-logo profile-card" src="../assets/img/guest.png" alt="">
     <div class="stats" v-if="loaded">
-      <p class="username">{{ username || "Guest" }}</p>
-      <p class="races">Races: {{ races }}</p>
+      <p class="username">{{ userInfo.username || "Guest" }}</p>
+      <p class="races">Races: {{ userInfo.races_completed }}</p>
       <div class="avg-speed">
-        Average Speed: {{ Math.round(avgspeed) }}wpm
+        Average Speed: {{ Math.round(userInfo.average_speed) }}wpm
       </div>
     </div>
     <div v-else>loading...</div>
@@ -13,22 +13,22 @@
 </template>
 
 <script lang="ts">
-import { VueElement } from "@vue/runtime-dom";
 import { Options, Vue } from "vue-class-component";
-import { mapState } from "vuex";
+import { mapGetters } from 'vuex';
 import axiosInstance from "../axios";
 
 @Options({
   computed: {
+    ...mapGetters(['getUserInfo']),
+    userInfo() {
+      console.log('userinfo', this.getUserInfo)
+      return this.getUserInfo;
+    }
   },
   data() {
     return {
       loggedIn: localStorage.getItem("loggedIn") == "true" ? true : false,
       loaded: false,
-      races: localStorage.getItem("races_completed"),
-      best: localStorage.getItem("best_speed"),
-      avgspeed: localStorage.getItem("average_speed"),
-      username: localStorage.getItem("username")
     };
   },
   mounted() {
@@ -38,11 +38,6 @@ import axiosInstance from "../axios";
       }
     };
   },
-
-  watch: {
-  },
 })
 export default class ProfileCard extends Vue {}
 </script>
-
-<style></style>

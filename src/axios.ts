@@ -1,16 +1,16 @@
 import axios from "axios";
 import { HeaderProperties } from "./types";
 
-const baseURL = "http://localhost:8000/";
+const baseURL = "https://typrrr-backend.vercel.app/";
 
 function get_access() {
-  console.log(localStorage.getItem("access_token") ?? []);
+  console.log(localStorage.getItem("access_token") ?? [], 'access');
   return localStorage.getItem("access_token") ?? [];
 }
 
 const axiosInstance = axios.create({
   baseURL: baseURL,
-  timeout: 5000,
+  timeout: 10000,
   headers: {
     Authorization: "JWT " + get_access(),
     "Content-Type": "application/json",

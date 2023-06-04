@@ -6,10 +6,10 @@
     >
     <hr />
     <div class="user-details">
-      <h2 class="details-heading">{{ username || 'Guest' }}'s typing stats</h2>
-      <h3 class="stat">Average Speed: {{ Math.round(avgSpeed) }} wpm</h3>
+      <h2 class="details-heading">{{ userInfo.username || 'Guest' }}'s typing stats</h2>
+      <h3 class="stat">Average Speed: {{ Math.round(userInfo.average_speed) }} wpm</h3>
       <h3 class="stat">Best Speed: {{ best || 0 }} wpm</h3>
-      <h3 class="stat">Races Completed: {{ races }}</h3>
+      <h3 class="stat">Races Completed: {{ userInfo.races_completed }}</h3>
       <DataChart v-if="Object.keys(filteredKeyData).length" :chartData="filteredKeyData" />
     </div>
   </div>
@@ -20,6 +20,7 @@ import { Options, Vue } from "vue-class-component";
 import axiosInstance from "../axios";
 import TypingField from "@/components/TypingField.vue"; // @ is an alias to /src
 import DataChart from "../components/DataChart.vue";
+import { mapGetters } from 'vuex';
 
 @Options({
   components: {
@@ -28,11 +29,6 @@ import DataChart from "../components/DataChart.vue";
   },
   data() {
     return {
-      id: localStorage.getItem("id"),
-      username: localStorage.getItem("username"),
-      races: localStorage.getItem("races_completed"),
-      avgSpeed: localStorage.getItem("average_speed"),
-      best: localStorage.getItem("best_speed"),
       keyData: localStorage.getItem("key_data"),
     };
   },
@@ -55,6 +51,11 @@ import DataChart from "../components/DataChart.vue";
       }, {} as { [key: string]: number });
       return obj 
     },
+    ...mapGetters(['getUserInfo']),
+    userInfo() {
+      console.log('userinfo', this.getUserInfo)
+      return this.getUserInfo;
+    }
   },
 })
 export default class Home extends Vue {}

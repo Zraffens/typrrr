@@ -1,4 +1,4 @@
-import { createStore } from 'vuex'
+import { createStore } from "vuex";
 
 export default createStore({
   state: {
@@ -9,34 +9,48 @@ export default createStore({
       created: "",
       races_completed: 0,
       average_speed: 0,
-      races_won: 0
-  }
+      races_won: 0,
+    },
   },
   mutations: {
-    created(state, {details}) {
-      state.userInfo = details;
-    }
-    ,
-    completeRace(state, {typingSpeed}) {
-      state.userInfo.races_completed++;
-      console.log('store', typingSpeed)
-      state.userInfo.average_speed = (state.userInfo.average_speed * state.userInfo.races_completed + typingSpeed) / (state.userInfo.races_completed + 1)
-    }
+    created(state, { details }) {
+      state.userInfo = details.details;
+    },
+    completeRace(state, { typingSpeed }) {
+      console.log("store", typingSpeed);
+      state.userInfo.average_speed =
+        (state.userInfo.average_speed * state.userInfo.races_completed +
+          typingSpeed) /
+        (state.userInfo.races_completed+1);
+    },
+    reset(state) {
+      state.userInfo = {
+        id: 0,
+        username: "",
+        email: "",
+        created: "",
+        races_completed: 0,
+        average_speed: 0,
+        races_won: 0,
+      };
+    },
   },
   actions: {
-    createdFunc: function ({commit}, payload) {
-      return commit("created", {details: payload})
+    createdFunc: function ({ commit }, payload) {
+      return commit("created", { details: payload });
     },
-    completeRace: function({commit}, payload) {
-      console.log('actions', payload)
-      return commit("completeRace", {typingSpeed: payload})
-    }
+    completeRace: function ({ commit }, payload) {
+      console.log("actions", payload);
+      return commit("completeRace", { typingSpeed: payload });
+    },
+    reset: function ({ commit }) {
+      return commit("reset");
+    },
   },
-  modules: {
-  },
+  modules: {},
   getters: {
     getId: function (state) {
-      console.log(state.userInfo)
+      console.log(state.userInfo);
       return state.userInfo.id;
     },
     getUsername: function (state) {
@@ -49,7 +63,7 @@ export default createStore({
       return state.userInfo.average_speed;
     },
     getUserInfo: function (state) {
-      return state.userInfo
-    }
-  }
-})
+      return state.userInfo;
+    },
+  },
+});
