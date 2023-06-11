@@ -1,4 +1,4 @@
-# typeracer-clone
+# typrrr
 
 ## Project setup
 ```
